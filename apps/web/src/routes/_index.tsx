@@ -1,50 +1,148 @@
 import type { Route } from "./+types/_index";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@recont/backend/convex/_generated/api";
-
-const TITLE_TEXT = `
- ██████╗ ███████╗████████╗████████╗███████╗██████╗
- ██╔══██╗██╔════╝╚══██╔══╝╚══██╔══╝██╔════╝██╔══██╗
- ██████╔╝█████╗     ██║      ██║   █████╗  ██████╔╝
- ██╔══██╗██╔══╝     ██║      ██║   ██╔══╝  ██╔══██╗
- ██████╔╝███████╗   ██║      ██║   ███████╗██║  ██║
- ╚═════╝ ╚══════╝   ╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝
-
- ████████╗    ███████╗████████╗ █████╗  ██████╗██╗  ██╗
- ╚══██╔══╝    ██╔════╝╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝
-    ██║       ███████╗   ██║   ███████║██║     █████╔╝
-    ██║       ╚════██║   ██║   ██╔══██║██║     ██╔═██╗
-    ██║       ███████║   ██║   ██║  ██║╚██████╗██║  ██╗
-    ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
- `;
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import type { Id } from "@recont/backend/convex/_generated/dataModel";
+import { NavLink } from "react-router";
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: "recont" }, { name: "description", content: "recont is a web application" }];
+  return [
+    { title: "recont" },
+    {
+      name: "description",
+      content: "recont is a web application for counting things",
+    },
+  ];
 }
 
 export default function Home() {
-  const healthCheck = useQuery(api.healthCheck.get);
+  const counters = useQuery(api.counters.getAll);
+  const [newCounterName, setNewCounterName] = useState("");
+
+  const createCounter = useMutation(api.counters.create);
+
+  const handleAddCounter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newCounterName.trim();
+    if (!name) return;
+    await createCounter({ name });
+    setNewCounterName("");
+  };
 
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-2">
-      <pre className="overflow-x-auto font-mono text-sm">{TITLE_TEXT}</pre>
-      <div className="grid gap-6">
-        <section className="rounded-lg border p-4">
-          <h2 className="mb-2 font-medium">API Status</h2>
-          <div className="flex items-center gap-2">
-            <div
-              className={`h-2 w-2 rounded-full ${healthCheck === "OK" ? "bg-green-500" : healthCheck === undefined ? "bg-orange-400" : "bg-red-500"}`}
-            />
-            <span className="text-sm text-muted-foreground">
-              {healthCheck === undefined
-                ? "Checking..."
-                : healthCheck === "OK"
-                  ? "Connected"
-                  : "Error"}
-            </span>
-          </div>
-        </section>
+    <div className="container mx-auto py-4 flex flex-col gap-4">
+      <form onSubmit={handleAddCounter} className="flex">
+        <Input
+          placeholder="new counter name"
+          value={newCounterName}
+          onChange={(e) => setNewCounterName(e.target.value)}
+        />
+        <Button
+          type="submit"
+          disabled={!newCounterName.trim()}
+          className="ml-2"
+        >
+          Create
+        </Button>
+      </form>
+      <div className="grid grid-cols-2 gap-4">
+        {counters?.map((counter) => (
+          <CounterCard
+            key={counter._id}
+            id={counter._id}
+            name={counter.name}
+            count={counter.count}
+          />
+        ))}
       </div>
     </div>
+  );
+}
+
+function CounterCard({
+  id,
+  name,
+  count,
+}: {
+  id: Id<"counters">;
+  name: string;
+  count: number;
+}) {
+  const set = useMutation(api.counters.set).withOptimisticUpdate(
+    (localStore, args) => {
+      const { count } = args;
+      const currentCounters = localStore.getQuery(api.counters.getAll);
+
+      localStore.setQuery(
+        api.counters.getAll,
+        {},
+        currentCounters?.map((counter) => {
+          if (counter._id === id) {
+            return { ...counter, count };
+          }
+          return counter;
+        })
+      );
+    }
+  );
+
+  const handleCountClick = async (
+    action: "increment" | "decrement" | "reset"
+  ) => {
+    switch (action) {
+      case "increment":
+        await set({ id, count: count + 1 });
+        break;
+      case "decrement":
+        await set({ id, count: count - 1 });
+        break;
+      case "reset":
+        await set({ id, count: 0 });
+        break;
+    }
+  };
+
+  return (
+    <Card className="group shadow-none pb-0 overflow-hidden">
+      <NavLink to={`/counter/${id}`} className="flex flex-col gap-6">
+        <h1 className="text-2xl font-display font-bold text-center">{name}</h1>
+        <p className="text-9xl text-center font-display">{count}</p>
+      </NavLink>
+      <div className="opacity-0 transition group-hover:opacity-100 grid grid-cols-3">
+        <Button
+          variant="destructive"
+          size="lg"
+          className="rounded-none"
+          onClick={() => handleCountClick("decrement")}
+        >
+          Decrement
+        </Button>
+        <Button
+          variant="ghost"
+          size="lg"
+          className="rounded-none"
+          onClick={() => handleCountClick("reset")}
+        >
+          Reset
+        </Button>
+        <Button
+          variant="default"
+          size="lg"
+          className="rounded-none"
+          onClick={() => handleCountClick("increment")}
+        >
+          Increment
+        </Button>
+      </div>
+    </Card>
   );
 }

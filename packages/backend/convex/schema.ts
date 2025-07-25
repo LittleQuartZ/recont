@@ -6,4 +6,9 @@ export default defineSchema({
     text: v.string(),
     completed: v.boolean(),
   }),
+
+  counters: defineTable({
+    name: v.string(),
+    count: v.number(),
+  }),
 });
