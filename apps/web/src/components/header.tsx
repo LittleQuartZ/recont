@@ -3,27 +3,32 @@ import { NavLink } from "react-router";
 import { ModeToggle } from "./mode-toggle";
 import { api } from "@recont/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
+import { UserButton } from "@clerk/clerk-react";
+import { HomeIcon } from "lucide-react";
+import { buttonVariants } from "./ui/button";
 
 export default function Header() {
   const healthCheck = useQuery(api.healthCheck.get);
-  const links = [
-    { to: "/", label: "Home" },
-    { to: "/todos", label: "Todos" },
-  ];
+  const links = [{ to: "/", icon: <HomeIcon /> }];
 
   return (
     <div>
       <div className="flex flex-row items-center justify-between px-3 py-3">
         <nav className="flex gap-4 text-lg">
-          {links.map(({ to, label }) => {
+          {links.map(({ to, icon }) => {
             return (
               <NavLink
                 key={to}
                 to={to}
-                className={({ isActive }) => (isActive ? "font-bold" : "")}
+                className={(isActive) =>
+                  buttonVariants({
+                    variant: isActive ? "default" : "outline",
+                    size: "icon",
+                  })
+                }
                 end
               >
-                {label}
+                {icon}
               </NavLink>
             );
           })}
@@ -42,6 +47,7 @@ export default function Header() {
             </span>
           </div>
           <ModeToggle />
+          <UserButton />
         </div>
       </div>
       <hr />

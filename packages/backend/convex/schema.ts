@@ -10,5 +10,6 @@ export default defineSchema({
   counters: defineTable({
     name: v.string(),
     count: v.number(),
-  }),
+    tokenIdentifier: v.string(),
+  }).index("by_token", ["tokenIdentifier"]),
 });

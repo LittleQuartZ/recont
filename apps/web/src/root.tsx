@@ -12,7 +12,20 @@ import Header from "./components/header";
 import { ThemeProvider } from "./components/theme-provider";
 import { Toaster } from "./components/ui/sonner";
 
-import { ConvexProvider, ConvexReactClient } from "convex/react";
+import {
+  ClerkProvider,
+  SignIn,
+  SignInButton,
+  useAuth,
+} from "@clerk/clerk-react";
+import {
+  Authenticated,
+  AuthLoading,
+  ConvexReactClient,
+  Unauthenticated,
+} from "convex/react";
+import { ConvexProviderWithClerk } from "convex/react-clerk";
+import Loader from "./components/loader";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -54,20 +67,32 @@ export default function App() {
     import.meta.env.VITE_CONVEX_URL as string
   );
   return (
-    <ConvexProvider client={convex}>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="dark"
-        disableTransitionOnChange
-        storageKey="vite-ui-theme"
-      >
-        <div className="grid grid-rows-[auto_1fr] h-svh">
-          <Header />
-          <Outlet />
-        </div>
-        <Toaster richColors />
-      </ThemeProvider>
-    </ConvexProvider>
+    <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
+      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          disableTransitionOnChange
+          storageKey="vite-ui-theme"
+        >
+          <div className="grid grid-rows-[auto_1fr] h-svh">
+            <Authenticated>
+              <Header />
+              <Outlet />
+            </Authenticated>
+            <Unauthenticated>
+              <div className="flex flex-col items-center justify-center h-svh">
+                <SignIn />
+              </div>
+            </Unauthenticated>
+            <AuthLoading>
+              <Loader />
+            </AuthLoading>
+          </div>
+          <Toaster richColors />
+        </ThemeProvider>
+      </ConvexProviderWithClerk>
+    </ClerkProvider>
   );
 }
 
