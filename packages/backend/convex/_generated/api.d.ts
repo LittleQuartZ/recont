@@ -15,7 +15,6 @@ import type {
 } from "convex/server";
 import type * as counters from "../counters.js";
 import type * as healthCheck from "../healthCheck.js";
-import type * as todos from "../todos.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -28,7 +27,6 @@ import type * as todos from "../todos.js";
 declare const fullApi: ApiFromModules<{
   counters: typeof counters;
   healthCheck: typeof healthCheck;
-  todos: typeof todos;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,
