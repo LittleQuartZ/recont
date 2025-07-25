@@ -1,13 +1,7 @@
 import type { Route } from "./+types/_index";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@recont/backend/convex/_generated/api";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -39,7 +33,7 @@ export default function Home() {
   };
 
   return (
-    <div className="container mx-auto py-4 flex flex-col gap-4">
+    <div className="container mx-auto p-4 flex flex-col gap-4">
       <form onSubmit={handleAddCounter} className="flex">
         <Input
           placeholder="new counter name"

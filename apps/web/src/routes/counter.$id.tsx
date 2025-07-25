@@ -71,52 +71,59 @@ export default function CounterDetail({ params }: Route.ComponentProps) {
     await rename({ id, name: newName });
   };
 
-  return (
-    <div className="justify-center container mx-auto py-4 flex flex-col gap-4">
-      <div className="relative flex justify-center">
-        {editing ? (
-          <Input
-            className="shadow-none text-2xl h-8 font-display font-bold text-center bg-transparent border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-            value={editName}
-            onChange={(e) => setEditName(e.target.value)}
-            onBlur={() => {
-              if (!editName.trim()) {
-                setEditing(false);
-                return;
-              }
+  const handleEditingClick = () => {
+    setEditing(true);
+    setEditName(counter ? counter.name : "");
+  };
 
-              handleCounterRename(editName);
-              setEditing(false);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
+  return (
+    <div className="px-4 justify-center container mx-auto py-4 flex flex-col gap-4">
+      <div className="relative flex justify-center">
+        <div onClick={handleEditingClick}>
+          {editing ? (
+            <Input
+              key="edit-value"
+              className="md:text-2xl shadow-none text-2xl font-display font-bold text-center bg-transparent border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onBlur={() => {
+                if (!editName.trim()) {
+                  setEditing(false);
+                  return;
+                }
+
                 handleCounterRename(editName);
                 setEditing(false);
-              }
-            }}
-            autoFocus
-          />
-        ) : (
-          <h1 className="text-2xl text-center font-display font-bold">
-            {counter ? counter.name : "Loading..."}
-          </h1>
-        )}
-
-        <div className="absolute right-0 top-0 flex gap-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => {
-              setEditing(true);
-              setEditName(counter ? counter.name : "");
-            }}
-          >
-            <EditIcon className="text-muted-foreground h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={handleCounterDelete}>
-            <TrashIcon className="text-destructive h-4 w-4" />
-          </Button>
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleCounterRename(editName);
+                  setEditing(false);
+                }
+              }}
+              autoFocus
+            />
+          ) : (
+            <Input
+              key="real-value"
+              disabled
+              className="w-min md:text-2xl disabled:opacity-100 disabled:cursor-pointer shadow-none text-2xl font-display font-bold text-center bg-transparent border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              value={counter ? counter.name : "Loading..."}
+              onClick={handleEditingClick}
+            />
+          )}
         </div>
+
+        {!editing && (
+          <div className="absolute right-0 top-0 flex gap-4">
+            <Button variant="outline" size="icon" onClick={handleEditingClick}>
+              <EditIcon className="text-muted-foreground h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={handleCounterDelete}>
+              <TrashIcon className="text-destructive h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
       {counter ? (
         <p className="text-[200px] text-center font-display my-auto">
