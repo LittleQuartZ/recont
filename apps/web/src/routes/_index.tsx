@@ -48,7 +48,7 @@ export default function Home() {
           Create
         </Button>
       </form>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid max-sm:grid-cols-1 grid-cols-2 gap-4">
         {counters?.map((counter) => (
           <CounterCard
             key={counter._id}

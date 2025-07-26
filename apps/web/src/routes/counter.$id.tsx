@@ -9,6 +9,16 @@ import { useNavigate } from "react-router";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: "recont - counter" },
+    {
+      name: "description",
+      content: "recont is a web application for counting things",
+    },
+  ];
+}
+
 export default function CounterDetail({ params }: Route.ComponentProps) {
   const id = params.id as Id<"counters">;
   const navigation = useNavigate();
@@ -83,7 +93,7 @@ export default function CounterDetail({ params }: Route.ComponentProps) {
           {editing ? (
             <Input
               key="edit-value"
-              className="md:text-2xl shadow-none text-2xl font-display font-bold text-center bg-transparent border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="dark:bg-transparent md:text-2xl shadow-none text-2xl font-display font-bold text-center bg-transparent border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               onBlur={() => {
@@ -107,7 +117,7 @@ export default function CounterDetail({ params }: Route.ComponentProps) {
             <Input
               key="real-value"
               disabled
-              className="w-min md:text-2xl disabled:opacity-100 disabled:cursor-pointer shadow-none text-2xl font-display font-bold text-center bg-transparent border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="w-min md:text-2xl disabled:opacity-100 disabled:cursor-pointer shadow-none text-2xl font-display font-bold text-center dark:bg-transparent border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
               value={counter ? counter.name : "Loading..."}
               onClick={handleEditingClick}
             />
