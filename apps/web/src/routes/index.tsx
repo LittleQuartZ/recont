@@ -1,4 +1,4 @@
-import type { Route } from "./+types/_index";
+import type { Route } from "./+types/index";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@recont/backend/convex/_generated/api";
 import { Card } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import type { Id } from "@recont/backend/convex/_generated/dataModel";
 import { NavLink } from "react-router";
+import { useUser } from "@clerk/clerk-react";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -19,7 +20,11 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  const counters = useQuery(api.counters.getAll);
+  const user = useUser();
+  const counters = useQuery(
+    api.counters.getAll,
+    user.isSignedIn ? undefined : "skip"
+  );
   const [newCounterName, setNewCounterName] = useState("");
 
   const createCounter = useMutation(api.counters.create);
@@ -107,7 +112,7 @@ function CounterCard({
 
   return (
     <Card className="group shadow-none pb-0 overflow-hidden">
-      <NavLink to={`/counter/${id}`} className="flex flex-col gap-6">
+      <NavLink to={`/${id}`} className="flex flex-col gap-6">
         <h1 className="text-2xl font-display font-bold text-center">{name}</h1>
         <p className="text-9xl text-center font-display">{count}</p>
       </NavLink>

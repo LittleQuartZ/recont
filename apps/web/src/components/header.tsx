@@ -3,11 +3,13 @@ import { NavLink } from "react-router";
 import { ModeToggle } from "./mode-toggle";
 import { api } from "@recont/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
-import { UserButton } from "@clerk/clerk-react";
+import { UserButton, useUser } from "@clerk/clerk-react";
 import { HomeIcon } from "lucide-react";
 import { buttonVariants } from "./ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 export default function Header() {
+  const auth = useUser();
   const healthCheck = useQuery(api.healthCheck.get);
   const links = [{ to: "/", icon: <HomeIcon /> }];
 
@@ -20,7 +22,7 @@ export default function Header() {
               <NavLink
                 key={to}
                 to={to}
-                className={(isActive) =>
+                className={({ isActive }) =>
                   buttonVariants({
                     variant: isActive ? "default" : "outline",
                     size: "icon",
@@ -47,7 +49,14 @@ export default function Header() {
             </span>
           </div>
           <ModeToggle />
-          <UserButton />
+          <Avatar className="rounded">
+            <AvatarImage src={auth.user?.imageUrl} />
+            <AvatarFallback>
+              {auth.user?.firstName?.charAt(0) ||
+                auth.user?.lastName?.charAt(0) ||
+                "?"}
+            </AvatarFallback>
+          </Avatar>
         </div>
       </div>
       <hr />

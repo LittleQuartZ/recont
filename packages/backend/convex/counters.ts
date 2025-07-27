@@ -1,3 +1,4 @@
+import { Id } from "./_generated/dataModel";
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
@@ -20,7 +21,7 @@ export const getAll = query({
 
 export const getOne = query({
   args: {
-    id: v.id("counters"),
+    id: v.string(),
   },
   handler: async (ctx, { id }) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -29,7 +30,10 @@ export const getOne = query({
       throw new Error("Unauthorized");
     }
 
-    const counter = await ctx.db.get(id);
+    if (!ctx.db.normalizeId("counters", id)) {
+      throw new Error("Counter not found");
+    }
+    const counter = await ctx.db.get(id as Id<"counters">);
 
     if (!counter || counter.tokenIdentifier !== identity.tokenIdentifier) {
       throw new Error("Counter not found");

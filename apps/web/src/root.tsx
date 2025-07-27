@@ -76,18 +76,8 @@ export default function App() {
           storageKey="vite-ui-theme"
         >
           <div className="grid grid-rows-[auto_1fr] h-svh">
-            <Authenticated>
-              <Header />
-              <Outlet />
-            </Authenticated>
-            <Unauthenticated>
-              <div className="flex flex-col items-center justify-center h-svh">
-                <SignIn />
-              </div>
-            </Unauthenticated>
-            <AuthLoading>
-              <Loader />
-            </AuthLoading>
+            <Header />
+            <Outlet />
           </div>
           <Toaster richColors />
         </ThemeProvider>

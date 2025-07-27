@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
-import type { Route } from "./+types/counter.$id";
+import type { Route } from "./+types/counter-detail";
 import { api } from "@recont/backend/convex/_generated/api";
 import type { Id } from "@recont/backend/convex/_generated/dataModel";
 import Loader from "@/components/loader";
@@ -8,6 +8,7 @@ import { EditIcon, MinusIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { useUser } from "@clerk/clerk-react";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -20,10 +21,14 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function CounterDetail({ params }: Route.ComponentProps) {
+  const auth = useUser();
   const id = params.id as Id<"counters">;
   const navigation = useNavigate();
 
-  const counter = useQuery(api.counters.getOne, { id });
+  const counter = useQuery(
+    api.counters.getOne,
+    auth.isSignedIn ? { id } : "skip"
+  );
   const [editName, setEditName] = useState<string>("");
   const [editing, setEditing] = useState<boolean>(false);
 
@@ -38,7 +43,7 @@ export default function CounterDetail({ params }: Route.ComponentProps) {
       localStore.setQuery(api.counters.getOne, { id }, currentCounters);
     }
   );
-  const counterDelete = useMutation(api.counters.deleteCounter);
+
   const rename = useMutation(api.counters.rename).withOptimisticUpdate(
     (localStore, args) => {
       const { name } = args;
@@ -50,6 +55,8 @@ export default function CounterDetail({ params }: Route.ComponentProps) {
       localStore.setQuery(api.counters.getOne, { id }, currentCounter);
     }
   );
+
+  const counterDelete = useMutation(api.counters.deleteCounter);
 
   const handleCountClick = async (
     action: "increment" | "decrement" | "reset"
@@ -124,7 +131,7 @@ export default function CounterDetail({ params }: Route.ComponentProps) {
           )}
         </div>
 
-        {!editing && (
+        {!editing && counter && (
           <div className="absolute right-0 top-0 flex gap-4">
             <Button variant="outline" size="icon" onClick={handleEditingClick}>
               <EditIcon className="text-muted-foreground h-4 w-4" />
@@ -136,35 +143,37 @@ export default function CounterDetail({ params }: Route.ComponentProps) {
         )}
       </div>
       {counter ? (
-        <p className="text-[200px] text-center font-display my-auto">
-          {counter.count}
-        </p>
+        <>
+          <p className="text-[200px] text-center font-display my-auto">
+            {counter.count}
+          </p>
+          <div className="grid grid-cols-3 gap-4">
+            <Button
+              variant="destructive"
+              size="xl"
+              onClick={() => handleCountClick("decrement")}
+            >
+              <MinusIcon />1
+            </Button>
+            <Button
+              variant="outline"
+              size="xl"
+              onClick={() => handleCountClick("reset")}
+            >
+              Reset
+            </Button>
+            <Button
+              variant="default"
+              size="xl"
+              onClick={() => handleCountClick("increment")}
+            >
+              <PlusIcon />1
+            </Button>
+          </div>
+        </>
       ) : (
         <Loader />
       )}
-      <div className="grid grid-cols-3 gap-4">
-        <Button
-          variant="destructive"
-          size="xl"
-          onClick={() => handleCountClick("decrement")}
-        >
-          <MinusIcon />1
-        </Button>
-        <Button
-          variant="outline"
-          size="xl"
-          onClick={() => handleCountClick("reset")}
-        >
-          Reset
-        </Button>
-        <Button
-          variant="default"
-          size="xl"
-          onClick={() => handleCountClick("increment")}
-        >
-          <PlusIcon />1
-        </Button>
-      </div>
     </div>
   );
 }
