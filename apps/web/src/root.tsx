@@ -14,6 +14,8 @@ import { Toaster } from "./components/ui/sonner";
 
 import {
   ClerkProvider,
+  RedirectToSignIn,
+  SignedOut,
   SignIn,
   SignInButton,
   useAuth,
@@ -64,7 +66,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const convex = new ConvexReactClient(
-    import.meta.env.VITE_CONVEX_URL as string
+    import.meta.env.VITE_CONVEX_URL as string,
   );
   return (
     <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
@@ -78,6 +80,9 @@ export default function App() {
           <div className="grid grid-rows-[auto_1fr] h-svh">
             <Header />
             <Outlet />
+            <SignedOut>
+              <RedirectToSignIn />
+            </SignedOut>
           </div>
           <Toaster richColors />
         </ThemeProvider>
