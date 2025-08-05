@@ -8,6 +8,7 @@ import { useState } from "react";
 import type { Id } from "@recont/backend/convex/_generated/dataModel";
 import { NavLink } from "react-router";
 import { useUser } from "@clerk/clerk-react";
+import { withErrorHandling } from "@/lib/error-utils";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -26,6 +27,7 @@ export default function Home() {
     user.isSignedIn ? undefined : "skip"
   );
   const [newCounterName, setNewCounterName] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
   const createCounter = useMutation(api.counters.create);
 
@@ -33,8 +35,14 @@ export default function Home() {
     e.preventDefault();
     const name = newCounterName.trim();
     if (!name) return;
-    await createCounter({ name });
+    
+    setIsCreating(true);
+    await withErrorHandling(
+      () => createCounter({ name }),
+      { successMessage: "Counter created successfully!" }
+    );
     setNewCounterName("");
+    setIsCreating(false);
   };
 
   return (
@@ -47,10 +55,10 @@ export default function Home() {
         />
         <Button
           type="submit"
-          disabled={!newCounterName.trim()}
+          disabled={!newCounterName.trim() || isCreating}
           className="ml-2"
         >
-          Create
+          {isCreating ? "Creating..." : "Create"}
         </Button>
       </form>
       <div className="grid max-sm:grid-cols-1 grid-cols-2 gap-4">
@@ -97,17 +105,11 @@ function CounterCard({
   const handleCountClick = async (
     action: "increment" | "decrement" | "reset"
   ) => {
-    switch (action) {
-      case "increment":
-        await set({ id, count: count + 1 });
-        break;
-      case "decrement":
-        await set({ id, count: count - 1 });
-        break;
-      case "reset":
-        await set({ id, count: 0 });
-        break;
-    }
+    const newCount = action === "increment" ? count + 1 
+                   : action === "decrement" ? count - 1 
+                   : 0;
+    
+    await withErrorHandling(() => set({ id, count: newCount }));
   };
 
   return (

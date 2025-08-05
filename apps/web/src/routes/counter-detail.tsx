@@ -9,6 +9,7 @@ import { useNavigate } from "react-router";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useUser } from "@clerk/clerk-react";
+import { withErrorHandling } from "@/lib/error-utils";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -27,10 +28,11 @@ export default function CounterDetail({ params }: Route.ComponentProps) {
 
   const counter = useQuery(
     api.counters.getOne,
-    auth.isSignedIn ? { id } : "skip"
+    auth.isSignedIn ? { id } : "skip",
   );
   const [editName, setEditName] = useState<string>("");
   const [editing, setEditing] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const set = useMutation(api.counters.set).withOptimisticUpdate(
     (localStore, args) => {
@@ -41,7 +43,7 @@ export default function CounterDetail({ params }: Route.ComponentProps) {
       currentCounters.count = count;
 
       localStore.setQuery(api.counters.getOne, { id }, currentCounters);
-    }
+    },
   );
 
   const rename = useMutation(api.counters.rename).withOptimisticUpdate(
@@ -53,39 +55,47 @@ export default function CounterDetail({ params }: Route.ComponentProps) {
       currentCounter.name = name;
 
       localStore.setQuery(api.counters.getOne, { id }, currentCounter);
-    }
+    },
   );
 
   const counterDelete = useMutation(api.counters.deleteCounter);
 
   const handleCountClick = async (
-    action: "increment" | "decrement" | "reset"
+    action: "increment" | "decrement" | "reset",
   ) => {
     if (!counter) return;
 
-    switch (action) {
-      case "increment":
-        await set({ id, count: counter.count + 1 });
-        break;
-      case "decrement":
-        await set({ id, count: counter.count - 1 });
-        break;
-      case "reset":
-        await set({ id, count: 0 });
-        break;
-    }
+    const newCount =
+      action === "increment"
+        ? counter.count + 1
+        : action === "decrement"
+          ? counter.count - 1
+          : 0;
+
+    await withErrorHandling(() => set({ id, count: newCount }));
   };
 
   const handleCounterDelete = async () => {
-    if (!counter) return;
-    counterDelete({ id });
+    if (!counter || isLoading) return;
 
-    navigation("/");
+    setIsLoading(true);
+    const result = await withErrorHandling(() => counterDelete({ id }), {
+      successMessage: "Counter deleted successfully!",
+    });
+
+    if (result !== null) {
+      navigation("/");
+    } else {
+      setIsLoading(false);
+    }
   };
 
   const handleCounterRename = async (newName: string) => {
     if (!counter) return;
-    await rename({ id, name: newName });
+
+    await withErrorHandling(() => rename({ id, name: newName }), {
+      successMessage: "Counter renamed successfully!",
+    });
   };
 
   const handleEditingClick = () => {
@@ -133,10 +143,20 @@ export default function CounterDetail({ params }: Route.ComponentProps) {
 
         {!editing && counter && (
           <div className="absolute right-0 top-0 flex gap-4">
-            <Button variant="outline" size="icon" onClick={handleEditingClick}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleEditingClick}
+              disabled={isLoading}
+            >
               <EditIcon className="text-muted-foreground h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={handleCounterDelete}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleCounterDelete}
+              disabled={isLoading}
+            >
               <TrashIcon className="text-destructive h-4 w-4" />
             </Button>
           </div>
